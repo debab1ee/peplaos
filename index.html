@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>PeplaOS 25</title>
+  <meta name="description" content="A very serious operating system for a very unserious man." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%2324324a%27 stroke-width=%272%27 stroke-linecap=%27round%27%3E%3Cpath d=%27M2.5 18.5c0-5 4-9 9-9h1c1.5 0 2.5-1 2.5-2.5V6a3.5 3.5 0 0 1 7 0v2c0 2-1 3-1 5 0 3.5-2.5 6.5-6.5 6.5H4.5a2 2 0 0 1-2-1z%27/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&family=Caveat:wght@600&display=swap" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- BOOT -->
+  <section id="boot" class="screen">
+    <pre id="boot-log"></pre>
+  </section>
+
+  <!-- SPLASH -->
+  <section id="splash" class="screen hidden">
+    <div class="splash-logo"></div>
+    <div class="splash-bar"><div id="splash-fill"></div></div>
+    <div id="splash-text" class="splash-text">Loading 25 years of chaos…</div>
+  </section>
+
+  <!-- LOGIN -->
+  <section id="login" class="screen hidden">
+    <div class="login-clock" id="login-clock"></div>
+    <div class="login-date" id="login-date"></div>
+    <div class="login-title">Who's logging in, birthday boy?</div>
+    <div id="login-users" class="login-users"></div>
+    <div class="login-hint" id="login-hint"></div>
+  </section>
+
+  <!-- DESKTOP -->
+  <section id="desktop" class="screen hidden">
+    <header id="menubar">
+      <div class="mb-left">
+        <button class="mb-logo" id="mb-logo" aria-label="PeplaOS menu"></button>
+        <strong id="mb-app">Finder</strong>
+        <span class="mb-item">File</span>
+        <span class="mb-item">Edit</span>
+        <span class="mb-item">View</span>
+        <span class="mb-item hide-sm">Aura</span>
+        <span class="mb-item hide-sm">Rizz</span>
+        <span class="mb-item" data-open="help">Help</span>
+      </div>
+      <div class="mb-right">
+        <button class="mb-btn" id="mb-mute" title="Sound effects on/off"></button>
+        <span class="hide-sm mb-ic" id="mb-liver" title="Liver battery"></span>
+        <span class="hide-sm mb-ic" id="mb-wifi"></span>
+        <span id="mb-user" class="mb-ic"></span>
+        <span id="mb-clock"></span>
+      </div>
+    </header>
+
+    <div id="apple-menu" class="dropdown hidden">
+      <div class="dd-item" data-open="about">About This Punnu</div>
+      <div class="dd-item" data-open="help">PeplaOS Help</div>
+      <hr />
+      <div class="dd-item" data-action="sleep">Sleep (like after 4 pegs)</div>
+      <div class="dd-item" data-action="restart">Restart</div>
+      <div class="dd-item" data-action="logout">Log Out <span id="dd-user"></span>…</div>
+    </div>
+
+    <div id="desk-icons"></div>
+    <div id="windows"></div>
+    <div id="notifications"></div>
+
+    <nav id="dock"></nav>
+  </section>
+
+  <canvas id="confetti"></canvas>
+
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="js/icons.js"></script>
+  <script src="js/sfx.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/images.js"></script>
+  <script src="js/os.js"></script>
+  <script src="js/apps.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+# PeplaOS 25 🦭
+
+A fake Mac-style operating system for Punnu's 25th birthday, made by the peplaz.
+
+## Editing
+- **All text, nicknames, friends' messages, the letter, seal videos, brainrot cards** → `js/data.js`
+- **Photos/videos** → drop them into `images/`, then run:
+  ```
+  node scripts/list-images.js
+  ```
+- **Voice notes** → put `.mp3` files in `audio/` and list them under `sounds` in `js/data.js`.
+  Convert WhatsApp `.ogg`/`.opus` with: `ffmpeg -i in.ogg -ac 1 -b:a 96k audio/name.mp3`
+
+## Run locally
+```
+python -m http.server 5525
+```
+then open http://localhost:5525
+
+## Deploy (GitHub Pages)
+Push this folder to a GitHub repo → Settings → Pages → Deploy from branch → `main` / root.
+(The mic-blowing cake needs https, which Pages gives you.)
