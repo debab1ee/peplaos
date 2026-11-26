@@ -7,60 +7,121 @@
 
   const roastCaptions = [
     "peak peplapig behaviour", "certified 25 y/o", "aura: questionable", "this one's going in the group",
-    "before the 4th peg", "after the 4th peg", "the face of a Succession fan", "W photo", "L photo (still love you)",
+    "IIM Mumbai topper behaviour", "sommelier mode on", "the face of a Succession fan", "W photo", "L photo (still love you)",
     "seal energy", "ei nonta meetha khabi?", "evidence #25", "pecho matal in his natural habitat",
   ];
 
   /* ================= PHOTOS ================= */
+  const albums = (() => {
+    const src = window.PEPLA_ALBUMS || [];
+    const byFile = new Map(OS.media.map((m) => [m.file, m]));
+    const seen = new Set();
+    const out = src.map((a) => ({
+      ...a,
+      items: a.items.filter((it) => byFile.has(it.file)).map((it) => { seen.add(it.file); return { ...byFile.get(it.file), caption: it.caption, album: a.title }; }),
+    })).filter((a) => a.items.length);
+    const rest = OS.media.filter((m) => !seen.has(m.file)).map((m) => ({ ...m, caption: rand(roastCaptions), album: "More memories" }));
+    if (rest.length) out.push({ title: "More memories", subtitle: "fresh evidence", icon: "sparkles", items: rest });
+    return out;
+  })();
+  const allItems = albums.flatMap((a) => a.items);
+  OS.captionFor = (file) => (allItems.find((m) => m.file === file) || {}).caption || "";
+
+  const thumb = (m, cls = "") => m.video
+    ? `<video class="${cls}" src="${m.src}#t=0.8" muted preload="metadata" playsinline></video>`
+    : `<img class="${cls}" src="${m.src}" loading="lazy" alt="${esc(m.caption || "")}" />`;
+  const coverOf = (a) => a.items.find((m) => !m.video) || a.items[0];
+
   OS.register("photos", {
-    name: "Photos", title: "Photos — Evidence Locker", icon: "images", color: "linear-gradient(135deg,#ffd86b,#ff6fa1,#7a7cff)", dock: true, w: 860, h: 560,
+    name: "Photos", title: () => `Photos — 25 Years of ${OS.user}`, icon: "images", color: "linear-gradient(135deg,#ffd86b,#ff6fa1,#7a7cff)", dock: true, w: 940, h: 620,
     render(body) {
-      let filter = "all";
       body.innerHTML = `
-        <div class="photos">
-          <div class="photos-top">
-            <div class="grow">${OS.media.length} items of evidence</div>
-            <button class="chip on" data-f="all">All</button>
-            <button class="chip" data-f="photos">Photos</button>
-            <button class="chip" data-f="videos">Videos</button>
-            <button class="chip" data-act="shuffle">${ico("shuffle")} Shuffle</button>
-            <button class="chip" data-act="show">${ico("play")} Slideshow</button>
-          </div>
-          <div class="grid"></div>
+        <div class="ph">
+          <aside class="ph-side">
+            <div class="ph-sec">Library</div>
+            <button class="ph-nav on" data-view="home">${ico("sparkles")}<span>Memories</span></button>
+            <button class="ph-nav" data-view="all">${ico("images")}<span>All Photos</span><small>${allItems.length}</small></button>
+            <div class="ph-sec">Albums</div>
+            ${albums.map((a, i) => `<button class="ph-nav" data-view="a${i}">${ico(a.icon || "folder")}<span>${esc(a.title)}</span><small>${a.items.length}</small></button>`).join("")}
+          </aside>
+          <main class="ph-main"></main>
         </div>`;
-      const grid = $(".grid", body);
-      let list = OS.media.slice();
-      const draw = () => {
-        const items = list.filter((m) => filter === "all" || (filter === "videos" ? m.video : !m.video));
-        grid.innerHTML = items.length ? "" : `<div class="pad muted">No ${filter} yet. Drop files in /images and run <code>node scripts/list-images.js</code>.</div>`;
-        items.forEach((m, i) => {
-          const c = el("div", "cell", m.video
-            ? `<video src="${m.src}#t=0.5" muted preload="metadata" playsinline></video><span class="vid-badge">${ico("play")} video</span>`
-            : `<img src="${m.src}" loading="lazy" alt="" />`);
-          c.onclick = () => { sfx("pop"); viewer(body, items, i, false); };
-          grid.appendChild(c);
-        });
-      };
-      body.querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => {
+      const main = $(".ph-main", body);
+      const navs = [...body.querySelectorAll(".ph-nav")];
+      const go = (view) => {
         sfx("click");
-        filter = b.dataset.f;
-        body.querySelectorAll("[data-f]").forEach((x) => x.classList.toggle("on", x === b));
+        navs.forEach((n) => n.classList.toggle("on", n.dataset.view === view));
+        main.scrollTop = 0;
+        if (view === "home") return home();
+        if (view === "all") return grid({ title: "All Photos", subtitle: `${allItems.length} memories, zero context`, items: allItems });
+        grid(albums[+view.slice(1)]);
+      };
+      navs.forEach((n) => (n.onclick = () => go(n.dataset.view)));
+
+      function home() {
+        const hero = rand(allItems.filter((m) => !m.video));
+        main.innerHTML = `
+          <section class="ph-hero">
+            <img src="${hero.src}" alt="" />
+            <div class="ph-hero-txt">
+              <small>Memories</small>
+              <h2>25 Years of ${esc(OS.user)}</h2>
+              <p>${allItems.length} memories · ${albums.length} albums · curated by the peplaz agency</p>
+              <button class="ph-play">${ico("play")} Play Memories</button>
+            </div>
+          </section>
+          <h3 class="ph-h3">Albums</h3>
+          <div class="ph-albums">
+            ${albums.map((a, i) => `
+              <button class="ph-album" data-i="${i}">
+                <div class="ph-cover">${thumb(coverOf(a))}</div>
+                <b>${esc(a.title)}</b>
+                <small>${esc(a.subtitle || "")} · ${a.items.length}</small>
+              </button>`).join("")}
+          </div>`;
+        $(".ph-play", main).onclick = () => viewer(body, allItems.filter((m) => !m.video).sort(() => Math.random() - 0.5), 0, true);
+        main.querySelectorAll(".ph-album").forEach((b) => (b.onclick = () => go("a" + b.dataset.i)));
+      }
+
+      function grid(a) {
+        main.innerHTML = `
+          <header class="ph-head">
+            <div><h2>${ico(a.icon || "images")} ${esc(a.title)}</h2><p>${esc(a.subtitle || "")} · ${a.items.length} items</p></div>
+            <div class="ph-actions">
+              <button class="chip" data-shuffle>${ico("shuffle")} Shuffle</button>
+              <button class="chip on" data-show>${ico("play")} Slideshow</button>
+            </div>
+          </header>
+          <div class="ph-masonry"></div>`;
+        const box = $(".ph-masonry", main);
+        let items = a.items.slice();
+        const draw = () => {
+          box.innerHTML = "";
+          items.forEach((m, i) => {
+            const f = el("figure", "ph-tile", `${thumb(m)}${m.video ? `<span class="ph-vid">${ico("play")}</span>` : ""}<figcaption>${esc(m.caption || "")}</figcaption>`);
+            f.onclick = () => { sfx("pop"); viewer(body, items, i, false); };
+            box.appendChild(f);
+          });
+        };
+        $("[data-shuffle]", main).onclick = () => { sfx("swap"); items.sort(() => Math.random() - 0.5); draw(); };
+        $("[data-show]", main).onclick = () => { const p = items.filter((m) => !m.video); if (p.length) viewer(body, p, 0, true); };
         draw();
-      }));
-      $('[data-act="shuffle"]', body).onclick = () => { sfx("swap"); list.sort(() => Math.random() - 0.5); draw(); };
-      $('[data-act="show"]', body).onclick = () => { const p = list.filter((m) => !m.video); if (p.length) { sfx("open"); viewer(body, p, 0, true); } };
-      draw();
+      }
+      home();
     },
   });
 
   function viewer(host, items, idx, auto) {
+    sfx("open");
     const v = el("div", "viewer");
     let timer;
     const show = () => {
       const m = items[idx];
-      v.innerHTML = (m.video ? `<video src="${m.src}" controls autoplay playsinline></video>` : `<img src="${m.src}" alt="" />`) +
-        `<button class="vbtn prev" aria-label="Previous">${ico("chevron-left")}</button><button class="vbtn next" aria-label="Next">${ico("chevron-right")}</button><button class="vclose">${ico("x")} Close</button>` +
-        `<div class="caption">${esc(rand(roastCaptions))}</div>`;
+      v.innerHTML = `
+        <div class="v-stage">${m.video ? `<video src="${m.src}" controls autoplay playsinline></video>` : `<img class="${auto ? "kb" : ""}" src="${m.src}" alt="" />`}</div>
+        <div class="v-top"><span>${esc(m.album || "")}</span><span>${idx + 1} / ${items.length}</span><button class="vclose" aria-label="Close">${ico("x")}</button></div>
+        <button class="vbtn prev" aria-label="Previous">${ico("chevron-left")}</button><button class="vbtn next" aria-label="Next">${ico("chevron-right")}</button>
+        <div class="caption">${esc(m.caption || rand(roastCaptions))}</div>`;
       $(".prev", v).onclick = (e) => { e.stopPropagation(); go(-1); };
       $(".next", v).onclick = (e) => { e.stopPropagation(); go(1); };
       $(".vclose", v).onclick = close;
@@ -68,15 +129,18 @@
     const go = (d) => { sfx("click"); idx = (idx + d + items.length) % items.length; show(); };
     const key = (e) => { if (e.key === "ArrowRight") go(1); if (e.key === "ArrowLeft") go(-1); if (e.key === "Escape") close(); };
     const close = () => { sfx("close"); clearInterval(timer); document.removeEventListener("keydown", key); v.remove(); };
+    let tx = null;
+    v.addEventListener("touchstart", (e) => (tx = e.touches[0].clientX), { passive: true });
+    v.addEventListener("touchend", (e) => { if (tx == null) return; const dx = e.changedTouches[0].clientX - tx; if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1); tx = null; });
     document.addEventListener("keydown", key);
     host.appendChild(v);
     show();
-    if (auto) timer = setInterval(() => go(1), 3000);
+    if (auto) timer = setInterval(() => go(1), 3500);
   }
 
   /* ================= MESSAGES ================= */
   const autoReplies = [
-    "ok boomer (you're 25 now)", "seen", "dhele dei?", "ghoti bekiye debo mona", "lol no",
+    "ok boomer (you're 25 now)", "seen", "hyaa", "kadji", "setai", "wdym", "Pune Palta Punnu", "ghoti bekiye debo mona", "lol no",
     "tell that to Logan Roy", "ami ekhon ektu byasto achi nahole toke jhamtam", "-1000 aura", "ork ork", "happy birthday though",
     "aro matlami koro pecho",
   ];
@@ -291,7 +355,7 @@
           ctx.createMediaStreamSource(stream).connect(an);
           const data = new Uint8Array(an.fftSize);
           let loud = 0;
-          OS.notify("mic", "Mic on", "Blow! Hard! Like it's the last peg!");
+          OS.notify("mic", "Mic on", "Blow! Hard! Like you're cooling a glass of mulled wine!");
           const loop = () => {
             an.getByteTimeDomainData(data);
             let sum = 0;
@@ -336,10 +400,11 @@
           "> scanning face............ done",
           "> reading palm............. sticky (beer?)",
           "> Succession watch hours... concerning",
-          "> liver status............. fighting for its life",
+          "> wine palate.............. refined (self-certified)",
+          "> CGPA..................... 9.17, he will mention it",
           "> aura reading............. +9000 (seal-boosted)",
           "> consulting tralalero tralala...",
-          "> consulting the peplaz council...",
+          "> consulting the peplaz agency (est. 2019)...",
           "> prophecy generated.",
         ];
         for (const s of steps) { sfx("key"); log.textContent += s + "\n"; await sleep(520); }
@@ -395,7 +460,7 @@
           <h3>Because you watched Succession</h3>
           <div class="flix-row">
             ${card("Succession (again)", "linear-gradient(135deg,#222,#444)", "You've seen this", 100, "succ")}
-            ${card("Succession — Bangla Dub", "linear-gradient(135deg,#0a3d2a,#1f7a4d)", "\"Logan Roy da, dhele dei?\"", 0, "dub")}
+            ${card("Succession — Bangla Dub", "linear-gradient(135deg,#0a3d2a,#1f7a4d)", "\"Logan Roy da, ghoti bekiye debo\"", 0, "dub")}
             ${card("Seal Planet", "linear-gradient(135deg,#a1c4fd,#c2e9fb)", "Nature documentary", 40, "seal")}
           </div>
         </div>`;
@@ -417,7 +482,8 @@
     name: "Activity Monitor", title: "Activity Monitor — Punnu.local", icon: "activity", color: "linear-gradient(#5a5a66,#1c1c22)", dock: true, w: 620, h: 440,
     render(body, win) {
       const procs = [
-        ["liver.exe", 99.4, "heart-pulse"], ["succession_rewatch", 74.2, "tv"], ["seal_thoughts", 51.0, "fish"],
+        ["succession_rewatch", 96.8, "tv"], ["wine_cellar_index", 74.2, "wine"], ["seal_thoughts", 51.0, "fish"],
+        ["iim_casestudy.xlsx", 44.4, "graduation-cap"],
         ["peplaz_groupchat", 38.7, "message-circle"], ["hangover_daemon", 33.1, "frown"], ["aura_farming", 21.6, "sparkles"],
         ["nonta_meetha_resolver", 12.8, "candy"], ["brain.exe", 0.5, "brain"], ["responsibility", 0.0, "clipboard"],
       ];
@@ -425,10 +491,10 @@
         <div class="am" style="display:flex;flex-direction:column;height:100%">
           <div style="flex:1;overflow:auto"><table><thead><tr><th>Process</th><th>% CPU</th><th>Status</th></tr></thead><tbody></tbody></table></div>
           <div class="am-foot">
-            <span>Liver battery: <b class="am-liver">${OS.liver}%</b></span>
+            <span>Glasses poured: <b class="am-wine">${OS.wine}</b></span>
             <span style="display:flex;gap:8px">
-              <button class="btn" data-kill>Force Quit liver.exe</button>
-              <button class="btn primary" data-drink>${ico("beer")} Dhele dei?</button>
+              <button class="btn" data-kill>Force Quit succession_rewatch</button>
+              <button class="btn primary" data-drink>${ico("wine")} Open a bottle</button>
             </span>
           </div>
         </div>`;
@@ -452,12 +518,12 @@
       };
       draw();
       win._iv = setInterval(draw, 1500);
-      $("[data-kill]", body).onclick = () => OS.dialog({ icon: "heart-crack", title: "Cannot quit liver.exe", text: "liver.exe already quit on its own in 2022. What you see is a ghost process." });
+      $("[data-kill]", body).onclick = () => OS.dialog({ icon: "tv", title: "Cannot quit succession_rewatch", text: "This process is protected by the user. Even the peplaz agency couldn't stop it." });
       $("[data-drink]", body).onclick = () => OS.dialog({
-        icon: "beer", title: "Dhele dei?", text: `${OS.otherName()} is asking if they should pour another one.`, sound: "pop",
+        icon: "wine", title: "Open a bottle?", text: `${OS.otherName()} found a bottle of red in the cellar. Uncork it?`, sound: "pop",
         buttons: [
-          { label: "Haan", primary: true, onClick: () => { OS.drink(3); $(".am-liver", body).textContent = OS.liver + "%"; setTimeout(() => OS.notify("beer", "Poured", rand(["one more won't hurt (it will)", "liver has left the chat", "Drinking is injurious to health — Gunnu", "this is your 4th 'last one'", "tumi aro matlami koro pecho"])), 500); } },
-          { label: "Na", runaway: true },
+          { label: "Obviously", primary: true, onClick: () => { OS.pourWine(); $(".am-wine", body).textContent = OS.wine; } },
+          { label: "No", runaway: true },
         ],
       });
     },
@@ -492,14 +558,16 @@
     ["ls", "list files in your home folder"],
     ["cat <file>", "read a file, e.g. cat secrets.txt"],
     ["neofetch", "system info about you"],
-    ["age", "your age (real, mental, liver)"],
+    ["age", "your age (real and mental)"],
+    ["cgpa", "your IIM Mumbai CGPA (you'll love this)"],
+    ["wine", "pour a glass, get tasting notes"],
     ["peplaz", "info about the group"],
     ["sudo make-a-wish", "make a birthday wish (needs sudo)"],
-    ["dhele-dei", "pour one more. liver goes down"],
+    ["ghoti-bekai", "bend the ghoti (the window will feel it)"],
     ["succession", "try it. we dare you"],
     ["seal", "open SealTube"],
     ["nonta / meetha", "the eternal question"],
-    ["rm -rf liver", "delete your liver (good luck)"],
+    ["rm -rf succession", "try to delete Succession (good luck)"],
     ["open <app>", "open an app, e.g. open cake"],
     ["apps", "list app names you can open"],
     ["mute / unmute", "turn sound effects off / on"],
@@ -535,19 +603,26 @@
 
       const cmds = {
         whoami: () => `${esc(OS.user)} (also known as: ${D.nicknames.map((n) => esc(n.name)).join(", ")})`,
-        ls: () => `secrets.txt   liver.bak   succession_s1-s4/   seal_pics/   peplaz_lore.md   wish.txt`,
-        neofetch: () => `<span class="cyn">  PeplaOS 25  </span>   ${esc(u)}@PeplaOS\n                 OS: PeplaOS 25 "Sealoma"\n                 Uptime: 25 years\n                 Shell: peplaz-sh (ds³ edition)\n                 CPU: 0.5 brain cells\n                 Memory: Succession quotes (100%)\n                 Liver: ${OS.liver}%`,
-        age: () => `${D.age}. ${D.age} years. Physically. Mentally: 12. Liver: ${D.age * 2 + 2}.`,
-        peplaz: () => `peplaz / ds³ / peplapigs\nmembers: ${D.members.join(", ")}\nshared brain cells: 1\nstatus: love you, idiot`,
+        ls: () => `secrets.txt   wine_list.txt   succession_s1-s4/   seal_pics/   peplaz_lore.md   wish.txt`,
+        neofetch: () => `<span class="cyn">  PeplaOS 25  </span>   ${esc(u)}@PeplaOS\n                 OS: PeplaOS 25 "Sealoma"\n                 Uptime: 25 years\n                 Shell: peplaz-sh (ds³ edition)\n                 CPU: 0.5 brain cells\n                 Memory: Succession quotes (100%)\n                 Education: IIM Mumbai, CGPA ${D.cgpa}\n                 Palate: Sommelier (self-certified)`,
+        age: () => `${D.age}. ${D.age} years. Physically. Mentally: 12.`,
+        cgpa: () => { sfx("magic"); return `<span class="yel">${D.cgpa}</span> (IIM Mumbai). Yes, we know. You told us. Sob milie ${D.cgpa}.`; },
+        wine: () => { OS.pourWine(); return `uncorking... glass #${OS.wine}\n<span class="cyn">${esc(OS.wineNote())}</span>`; },
+        peplaz: () => `peplaz agency / ds³ / peplapigs\nfounded: ${D.foundedYear} (${new Date().getFullYear() - D.foundedYear} years of chaos)\nmembers: ${D.members.join(", ")}\nshared brain cells: 1\nstatus: love you, idiot`,
         "sudo make-a-wish": () => { OS.confetti(200, true); return `<span class="yel">[sudo] password for ${esc(u)}:</span> ********\nWish granted (terms and conditions apply, peplaz may bully you anyway)`; },
         "make-a-wish": () => `<span class="err">permission denied. try sudo, coward.</span>`,
-        "dhele-dei": () => { OS.drink(4); return `pouring...\nliver: ${OS.liver}%\n<span class="yel">warning: this was your "last one" (x7)</span>`; },
+        "ghoti-bekai": () => {
+          const w = OS.windows.get("terminal");
+          if (w) { w.classList.remove("shake"); void w.offsetWidth; w.classList.add("shake"); }
+          sfx("error"); OS.sys("error");
+          return `bending ghoti...\n<span class="yel">   ___         ___\n  /   \\       /   \\__\n |     |  -->  |      /\n  \\___/       \\____/</span>\n<span class="err">ghoti bekiye dilam mona.</span>`;
+        },
         succession: () => { sfx("error"); return `<span class="err">Error 418: you've watched this 14 times. Seek help.</span>`; },
         seal: () => { sfx("seal"); setTimeout(() => OS.open("sealtube"), 400); return "opening SealTube… ork ork"; },
         nonta: () => `ei meetha nonta khabi?`,
         meetha: () => `ei nonta meetha khabi?`,
         "nonta / meetha": () => `pick one. (you can't)`,
-        "rm -rf liver": () => { sfx("error"); return `<span class="err">rm: liver: No such file or directory (already removed in 2022)</span>`; },
+        "rm -rf succession": () => { sfx("error"); return `<span class="err">rm: succession: Permission denied. The user has protected this file with his life.</span>`; },
         apps: () => Object.values(OS.apps).filter((a) => a.dock || a.desk).map((a) => `  <span class="cyn">${esc(a.id)}</span>  ${esc(a.name)}`).join("\n"),
         mute: () => { if (!SFX.muted) SFX.toggle(); return "sound effects off"; },
         unmute: () => { if (SFX.muted) SFX.toggle(); sfx("pop"); return "sound effects on"; },
@@ -560,8 +635,8 @@
       const files = {
         "secrets.txt": "1. He cried during the Schitt's Creek finale.\n2. He has a seal plushie (probably).\n3. The peplaz love him. Don't tell him.",
         "wish.txt": "Happy 25th from the peplaz — now go open the Top Secret folder.",
-        "peplaz_lore.md": "# peplaz lore\n- 4 pigs\n- 1 brain cell\n- infinite group chat messages\n- 0 completed plans",
-        "liver.bak": `<span class="err">file corrupted (by alcohol)</span>`,
+        "peplaz_lore.md": "# peplaz lore\n- an agency, not a council. est. 2019\n- 4 pigs\n- 1 brain cell\n- infinite group chat messages\n- 0 completed plans",
+        "wine_list.txt": "1. Red, bold, expensive\n2. Red, bold, slightly less expensive\n3. Whatever the peplaz bring (he'll judge it)",
       };
       const history = []; let hi = 0;
       inp.addEventListener("keydown", (e) => {
@@ -624,7 +699,9 @@
             <tr><td>Chip</td><td>Peplapig M1 (0.5 brain cells)</td></tr>
             <tr><td>Memory</td><td>100% Succession quotes</td></tr>
             <tr><td>Graphics</td><td>Beer Goggles Pro</td></tr>
-            <tr><td>Liver</td><td>${OS.liver}% (service recommended)</td></tr>
+            <tr><td>Education</td><td>IIM Mumbai, CGPA ${D.cgpa} (topper)</td></tr>
+            <tr><td>Palate</td><td>Wine connoisseur (self-certified)</td></tr>
+            <tr><td>Support</td><td>peplaz agency, since ${D.foundedYear}</td></tr>
             <tr><td>Serial</td><td>PEPLA-PIG-DS3-0025</td></tr>
             <tr><td>Warranty</td><td>Expired. Peplaz offer lifetime support anyway.</td></tr>
           </table>

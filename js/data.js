@@ -7,6 +7,8 @@
 window.PEPLA = {
   birthdayBoy: "Punnu",
   age: 25,
+  cgpa: "9.17",        // IIM Mumbai, as announced in the group chat
+  foundedYear: 2019,   // peplaz agency, est.
 
   // Login screen "user accounts" — all his names. Whichever he picks,
   // the OS calls him that. The rest get sprinkled around randomly.
@@ -82,7 +84,7 @@ window.PEPLA = {
     body: [
       "If you're reading this, you clicked through an entire fake operating system for us. That's the most effort you've put into anything since your last Succession rewatch.",
       "We roast you because we love you. Mostly the second part. Sometimes the first.",
-      "25 years of chaos, seals, questionable drinking decisions and somehow still being the best of us. Thank you for being our peplapig.",
+      "25 years of chaos, seals, fine wine and a 9.17 CGPA, and somehow still humble enough to hang out with us. The peplaz agency has been running since 2019 and you are still our best client. Thank you for being our peplapig.",
       "Happy birthday. Ghoti bekiye debo if you cry.",
     ],
     signoff: "— gunnu, munnu, chullu (peplaz / ds³ / peplapigs)",
@@ -92,7 +94,7 @@ window.PEPLA = {
   // YouTube video IDs (the part after watch?v=). First one plays first.
   sealVideos: [
     { id: "7Frz3J25ZRw", title: "Baby seal tries to talk (it's you)" },
-    { id: "xwfFwSKs1io", title: "Seal yawns, smiles, sleeps (you after 2 pegs)" },
+    { id: "xwfFwSKs1io", title: "Seal yawns, smiles, sleeps (you after one glass of red)" },
     { id: "sRlbTwmifd4", title: "Seal gets up close and personal" },
   ],
 
@@ -102,20 +104,20 @@ window.PEPLA = {
   // ---- Brainrot.app trading cards ---------------------------------------
   cards: [
     { name: "Punnurino Sealini", art: ["seal", "beer"], rarity: "BIRTHDAY LEGENDARY", who: "punnu",
-      stats: { Aura: "9000", "Liver HP": "3", "Succession lore": "100", Rizz: "??" },
-      move: "Ghoti Bekiye Debo — bends your ghoti. 100% crit." },
+      stats: { Aura: "9000", CGPA: "9.17", "Wine palate": "Sommelier", Rizz: "??" },
+      move: "Pune Palta Punnu — flips the whole room. 100% crit." },
     { name: "Tung Tung Tung Gunnu", art: ["tree-pine", "hammer"], rarity: "RARE", who: "gunnu",
       stats: { Aura: "6900", Bullying: "MAX", Sleep: "0", Rizz: "mid" },
-      move: "Dhele Dei? — pours one more. Nobody asked." },
+      move: "Ghoti Bekai — bends the ghoti. Nobody asked." },
     { name: "Munnuccino Assassino", art: ["coffee", "swords"], rarity: "EPIC", who: "munnu",
       stats: { Aura: "7200", Chaos: "99", "Nonta/Meetha": "both", Rizz: "low" },
       move: "Nonta Meetha Loop — confuses enemy forever." },
     { name: "Chullulero Chullala", art: ["fish", "zap"], rarity: "RARE", who: "chullu",
       stats: { Aura: "6500", Roasts: "∞", Punctuality: "0", Rizz: "crine" },
       move: "Jhamtam — is busy, otherwise would jhamtam you." },
-    { name: "Peplapig Supremo", art: ["piggy-bank", "crown"], rarity: "MYTHIC (ds³)", who: "peplaz",
-      stats: { Members: "4", Brain: "1 (shared)", Love: "too much", Rizz: "0" },
-      move: "Group Chat Spam — 400 messages, 0 plans." },
+    { name: "Peplapig Supremo", art: ["piggy-bank", "crown"], rarity: "MYTHIC (ds³)", who: "peplaz agency, est. 2019",
+      stats: { Founded: "2019", Members: "4", Brain: "1 (shared)", Love: "too much" },
+      move: "Good Morning Beautiful Peplaz — daily, without fail." },
   ],
 
   // How many different apps he must open before Top Secret unlocks

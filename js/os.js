@@ -31,7 +31,7 @@
     opened: new Set(),
     windows: new Map(),
     z: 100,
-    liver: 12,
+    wine: 0,
   };
   window.OS = OS;
 
@@ -102,12 +102,19 @@
     OS.notify("hand", "PeplaOS is busy", "ami ekhon ektu byasto achi nahole toke jhamtam", 5000);
   };
 
-  OS.setLiver = () => { $("#mb-liver-v").textContent = OS.liver + "%"; };
-  OS.drink = (amount = 3) => {
+  const tastingNotes = [
+    "Notes of blackcurrant, oak and IIM-level arrogance.",
+    "A bold red. Pairs well with a Succession rewatch.",
+    "Crisp, dry, slightly judgemental. Like Sou.",
+    "Swirled for 4 minutes before the first sip. Classic.",
+    "Vintage 2019, the year the peplaz agency was founded.",
+    "Smells like ambition and a 9.17 CGPA.",
+  ];
+  OS.wineNote = () => rand(tastingNotes);
+  OS.pourWine = () => {
     sfx("pour");
-    OS.liver = Math.max(1, OS.liver - amount);
-    OS.setLiver();
-    if (OS.liver <= 3) setTimeout(() => OS.notify("battery-warning", "Low Liver Battery", "Your liver is at " + OS.liver + "%. Please connect to a nimbu pani immediately."), 600);
+    OS.wine++;
+    setTimeout(() => OS.notify("wine", `Glass #${OS.wine} poured`, OS.wineNote()), 500);
   };
 
   /* ---------- confetti ---------- */
@@ -285,7 +292,7 @@
     // Stats widget
     const c = el("div", "countdown-w", `
       <div>${ico("cake")} Age</div><b>${D.age}</b>
-      <div style="margin-top:8px">${ico("heart-pulse")} Liver age</div><b>${D.age * 2 + 2}</b>
+      <div style="margin-top:8px">${ico("graduation-cap")} CGPA (IIM Mumbai)</div><b>${D.cgpa}</b>
       <div style="margin-top:8px">${ico("tv")} Succession rewatches</div><b>∞</b>`);
     $("#desktop").appendChild(c);
 
@@ -316,7 +323,7 @@
   }
   function menus() {
     $("#mb-logo").innerHTML = ico("seal");
-    $("#mb-liver").innerHTML = `${ico("heart-pulse")} <span id="mb-liver-v">${OS.liver}%</span>`;
+    $("#mb-cgpa").innerHTML = `${ico("graduation-cap")} CGPA ${D.cgpa}`;
     $("#mb-wifi").innerHTML = `${ico("wifi")} peplaz-wifi`;
     const mute = $("#mb-mute");
     const drawMute = () => (mute.innerHTML = ico(window.SFX && SFX.muted ? "volume-x" : "volume-2"));
@@ -392,8 +399,10 @@
       ["CPU: 1x Punnu @ 0.5 brain cells", ""],
       ["Memory test: 640K of which 600K is Schitt's Creek quotes", "ok"],
       ["Checking friendship levels.............", "ok"],
+      ["Connecting to peplaz agency (est. 2019)", "ok"],
       ["Detecting peplapigs: punnu, gunnu, munnu, chullu", "ok"],
-      ["Mounting /dev/liver ...................", "warn", "DEGRADED"],
+      ["Uncorking /dev/wine ...................", "ok", "VINTAGE"],
+      ["Loading IIM Mumbai topper module ......", "ok", "CGPA 9.17"],
       ["Loading Succession_rewatch_#14.mkv ....", "bad", "WHY"],
       ["Calibrating aura farming module .......", "ok"],
       ["Installing tralalero_tralala.dll ......", "ok"],
@@ -450,7 +459,8 @@
     buildDesktop();
     OS.confetti(160, true);
     setTimeout(() => OS.notify("cake", `Welcome, ${name}`, `Happy ${D.age}th birthday! Open apps from the dock. Something on the desktop is locked…`, 7000), 700);
-    setTimeout(() => OS.notify("message-circle", "Messages", `You have ${D.friends.length} unread chats from the peplaz`, 6000), 4000);
+    setTimeout(() => OS.notify("message-circle", "Sri Bish", "Good morning beautiful peplaz. Especially the birthday one.", 6000), 4000);
+    setTimeout(() => OS.notify("message-circle", "Messages", `You have ${D.friends.length} unread chats from the peplaz`, 6000), 6500);
     setTimeout(() => OS.notify("circle-help", "Tip", "Stuck? Open Help in the menu bar, or type help in Terminal.", 6000), 9000);
     ["pointerdown", "keydown", "pointermove"].forEach((ev) => document.addEventListener(ev, resetIdle, { passive: true }));
     resetIdle();
