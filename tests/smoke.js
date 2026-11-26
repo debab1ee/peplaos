@@ -9,6 +9,14 @@
 
   check("boot reaches login screen", await until(() => document.querySelector(".login-user")));
   document.querySelector(".login-user")?.click();
+  await sleep(200);
+  const pw = document.querySelector(".login-pw");
+  check("password screen shows hint from the start", pw && /tomar firstborn/.test(pw.textContent) && pw.querySelector(".pw-reveal").classList.contains("hidden"));
+  const pin = pw.querySelector("input"), submit = () => pw.querySelector(".pw-row").requestSubmit();
+  pin.value = "wrong"; submit();
+  await sleep(100);
+  check("wrong password reveals it", document.querySelector("#desktop").classList.contains("hidden") && /srihori/.test(pw.querySelector(".pw-reveal").textContent));
+  pin.value = "Srihori "; submit();
   check("desktop shows after login", await until(() => !document.querySelector("#desktop").classList.contains("hidden")));
 
   const crashed = [];

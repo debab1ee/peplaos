@@ -22,6 +22,13 @@ window.PEPLA = {
     { name: "Pecho Matal",    icon: "beer" },
   ],
 
+  // Login password. The hint shows from the start; a wrong try reveals the password.
+  password: {
+    value: "srihori",
+    hint: "tomar firstborn",
+    roast: "IIM topper, CGPA 9.17, can't remember his own firstborn.",
+  },
+
   groupName: "peplaz",
   groupAliases: ["ds³", "peplapigs"],
   members: ["punnu", "gunnu", "munnu", "chullu"],

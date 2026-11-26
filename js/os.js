@@ -468,9 +468,58 @@
     box.innerHTML = "";
     D.nicknames.forEach((n) => {
       const b = el("button", "login-user", `<div class="avatar">${ico(n.icon)}</div><span>${esc(n.name)}</span>`);
-      b.onclick = () => enter(n.name);
+      b.onclick = () => askPassword(n);
       box.appendChild(b);
     });
+  }
+
+  // Password screen. The first hint is always visible; a wrong attempt reveals the password.
+  function askPassword(n) {
+    const P = D.password || {};
+    if (!P.value) return enter(n.name);
+    sfx("click");
+    const L = $("#login");
+    $("#login-users").classList.add("hidden");
+    $(".login-title", L).classList.add("hidden");
+    const pw = el("div", "login-pw", `
+      <div class="avatar">${ico(n.icon)}</div>
+      <span class="pw-name">${esc(n.name)}</span>
+      <form class="pw-row">
+        <input type="password" placeholder="Enter Password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Password" />
+        <button type="submit" class="pw-go" aria-label="Log in">${ico("arrow-right")}</button>
+      </form>
+      <div class="pw-hint">${ico("lightbulb")} Hint: ${esc(P.hint)}</div>
+      <div class="pw-reveal hidden"></div>
+      <button class="pw-back" type="button">${ico("chevron-left")} other accounts</button>`);
+    L.appendChild(pw);
+    const inp = $("input", pw), row = $(".pw-row", pw), reveal = $(".pw-reveal", pw);
+    setTimeout(() => inp.focus(), 50);
+    let wrong = 0;
+    inp.addEventListener("keydown", () => sfx("key"));
+    row.onsubmit = (e) => {
+      e.preventDefault();
+      if (inp.value.trim().toLowerCase() === P.value.toLowerCase()) {
+        sfx("unlock");
+        pw.remove();
+        $("#login-users").classList.remove("hidden");
+        $(".login-title", L).classList.remove("hidden");
+        return enter(n.name);
+      }
+      wrong++;
+      sfx("error");
+      row.classList.remove("shake"); void row.offsetWidth; row.classList.add("shake");
+      inp.value = "";
+      reveal.classList.remove("hidden");
+      reveal.innerHTML = wrong === 1
+        ? `${ico("key-round")} Wrong. Fine, here it is: <b>${esc(P.value)}</b>`
+        : `${ico("key-round")} It's literally <b>${esc(P.value)}</b>. ${esc(P.roast || "")}`;
+    };
+    $(".pw-back", pw).onclick = () => {
+      sfx("click");
+      pw.remove();
+      $("#login-users").classList.remove("hidden");
+      $(".login-title", L).classList.remove("hidden");
+    };
   }
   function enter(name) {
     OS.user = name;
