@@ -111,10 +111,33 @@
     "Smells like ambition and a 9.17 CGPA.",
   ];
   OS.wineNote = () => rand(tastingNotes);
+  // After a couple of glasses he starts announcing his love for the peplaz.
+  // (lines straight from the group chat)
+  const loveAnnouncements = [
+    "I love you all so so much",
+    "Guys. Guys. Listen. I love you guys.",
+    "reiterating je we love you",
+    "peplaz is the best agency in the world. since 2019. I'm serious.",
+    "Good night. We love you",
+    "no but seriously I love you guys so much hyaaa",
+  ];
+  let loveIdx = 0;
   OS.pourWine = () => {
     sfx("pour");
     OS.wine++;
-    setTimeout(() => OS.notify("wine", `Glass #${OS.wine} poured`, OS.wineNote()), 500);
+    const n = OS.wine;
+    setTimeout(() => OS.notify("wine", `Glass #${n} poured`, OS.wineNote()), 500);
+    if (n >= 2) {
+      const line = loveAnnouncements[loveIdx++ % loveAnnouncements.length];
+      setTimeout(() => OS.notify("heart", `${OS.user} (${n} glasses in)`, line, 6000), 2200);
+    }
+    if (n === 4) {
+      setTimeout(() => OS.dialog({
+        icon: "megaphone", title: "Public announcement", sound: "notify",
+        text: `${OS.user} would like everyone to know that he loves the peplaz very, very much. He will now say it 11 more times.`,
+        buttons: [{ label: "We love you too", primary: true, onClick: () => OS.confetti(160) }],
+      }), 4200);
+    }
   };
 
   /* ---------- confetti ---------- */
@@ -344,6 +367,7 @@
         document.body.appendChild(s);
       }
       if (it.dataset.action === "restart") location.reload();
+      if (it.dataset.action === "bugs") OS.dialog({ icon: "bug", title: "Bugs khoma korben", text: `PeplaOS was hand-built by ${D.author} for your birthday. If something breaks, it's a feature. If it's really broken, bugs khoma korben.`, sound: "pop", buttons: [{ label: "Khoma korlam", primary: true }] });
       if (it.dataset.action === "logout") {
         OS.dialog({
           icon: "door-open", title: "Log out?", text: "You can't leave your own birthday party.",
@@ -410,6 +434,7 @@
       ["Searching for seals nearby .............", "ok", "FOUND"],
       ["Turning 25 ..............................", "ok", "DONE (no refunds)"],
       ["", ""],
+      [`Built by ${D.author}. Bugs khoma korben.`, "warn", "NO WARRANTY"],
       ["Booting PeplaOS…", ""],
     ];
     for (const [t, cls, tag] of lines) {
@@ -473,6 +498,12 @@
     const sk = () => (skip = true);
     $("#boot").addEventListener("click", sk);
     document.addEventListener("keydown", sk, { once: true });
+    if (/[?&]smoke\b/.test(location.search)) {
+      skip = true;
+      const s = document.createElement("script");
+      s.src = "tests/smoke.js";
+      document.body.appendChild(s);
+    }
     boot();
   });
 })();

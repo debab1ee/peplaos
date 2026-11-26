@@ -111,6 +111,94 @@
     },
   });
 
+  /* ================= CHULER JOTNO 101 ================= */
+  const hairPick = (needle) => {
+    const hair = (albums.find((a) => /hair/i.test(a.title)) || { items: [] }).items;
+    return hair.find((m) => (m.caption || "").toLowerCase().includes(needle)) || hair.find((m) => !m.video) || allItems[0];
+  };
+  OS.register("chul", {
+    name: "Chuler Jotno 101", title: "Chuler Jotno 101 — a masterclass", icon: "scissors", color: "linear-gradient(135deg,#c471f5,#fa71cd)", dock: true, w: 820, h: 600,
+    render(body) {
+      const lessons = [
+        { t: "The Foundation", tip: "Shampoo twice a week, not daily. Your scalp has feelings, and they are expensive.", m: hairPick("fan club") },
+        { t: "Conditioner Is Not Optional", tip: "Mid-length to ends only. Leave it for 3 minutes. Use that time to rewatch one Succession scene.", m: hairPick("before the transformation") },
+        { t: "The Salon Commitment", tip: "Colour cap on, fear in eyes, results worth it. Never trust a friend with scissors (looking at the peplaz).", m: hairPick("fear in eyes") },
+        { t: "Never Towel-Rub", tip: "Pat it dry. Rubbing causes frizz, and frizz causes 'woke up like this' photos.", m: hairPick("woke up") },
+        { t: "Sleep Is Styling", tip: "Silk pillowcase recommended. Sleeping upright on a chair also works, apparently.", m: hairPick("sleep") },
+        { t: "The Hair Flip", tip: "Chin down, swing, look up slowly. Practise in the mirror. Never in a moving auto.", m: hairPick("hair flip") },
+      ];
+      const quiz = [
+        { q: "How often should you shampoo?", a: ["Every day", "Twice a week", "Whenever Gunnu complains"], ok: 1 },
+        { q: "Who is allowed to touch the hair?", a: ["Anyone", "Only the salon", "Nobody. Not even the peplaz."], ok: 2 },
+        { q: "The secret to Sou-level hair is…", a: ["An expensive serum", "Genetics (unfair)", "A glass of red wine"], ok: 1 },
+      ];
+      const done = new Set();
+      body.innerHTML = `
+        <div class="chul">
+          <header class="chul-head">
+            <div class="chul-badge">${ico("scissors")}</div>
+            <div><h2>Chuler Jotno 101</h2><p>A masterclass by Prof. ${esc(OS.user)}, holder of the best hair in the peplaz agency</p></div>
+            <div class="chul-prog"><span>0 / ${lessons.length} lessons</span><div><i></i></div></div>
+          </header>
+          <div class="chul-lessons">
+            ${lessons.map((l, i) => `
+              <article class="chul-card" data-i="${i}">
+                <div class="chul-img">${l.m.video ? `<video src="${l.m.src}" muted loop playsinline preload="metadata"></video>` : `<img src="${l.m.src}" loading="lazy" alt="" />`}<span>Lesson ${i + 1}</span></div>
+                <div class="chul-txt"><h3>${esc(l.t)}</h3><p>${esc(l.tip)}</p><button class="btn">${ico("check")} Mark as learnt</button></div>
+              </article>`).join("")}
+          </div>
+          <section class="chul-quiz"></section>
+        </div>`;
+      const prog = () => {
+        $(".chul-prog span", body).textContent = `${done.size} / ${lessons.length} lessons`;
+        $(".chul-prog i", body).style.width = (done.size / lessons.length) * 100 + "%";
+        if (done.size === lessons.length) startQuiz();
+      };
+      body.querySelectorAll(".chul-card").forEach((c) => {
+        const i = +c.dataset.i, btn = $(".btn", c), vid = $("video", c);
+        if (vid) { c.addEventListener("pointerenter", () => vid.play().catch(() => {})); c.addEventListener("pointerleave", () => vid.pause()); }
+        btn.onclick = () => {
+          if (done.has(i)) return;
+          done.add(i); sfx("pop");
+          c.classList.add("learnt"); btn.innerHTML = `${ico("check-check")} Learnt`;
+          prog();
+        };
+      });
+      let quizOn = false;
+      function startQuiz() {
+        if (quizOn) return; quizOn = true;
+        sfx("unlock");
+        const box = $(".chul-quiz", body);
+        let qi = 0, score = 0;
+        const ask = () => {
+          if (qi >= quiz.length) return cert();
+          const Q = quiz[qi];
+          box.innerHTML = `<h3>${ico("graduation-cap")} Final exam · Question ${qi + 1} of ${quiz.length}</h3><p class="chul-q">${esc(Q.q)}</p><div class="chul-ans">${Q.a.map((a, k) => `<button class="chip" data-k="${k}">${esc(a)}</button>`).join("")}</div><p class="chul-fb"></p>`;
+          box.querySelectorAll("[data-k]").forEach((b) => (b.onclick = () => {
+            const right = +b.dataset.k === Q.ok;
+            if (right) score++;
+            sfx(right ? "magic" : "error");
+            $(".chul-fb", box).textContent = right ? "Correct. The hair approves." : "Wrong. The hair is disappointed in you.";
+            box.querySelectorAll("[data-k]").forEach((x) => (x.disabled = true));
+            setTimeout(() => { qi++; ask(); }, 1100);
+          }));
+          box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        };
+        const cert = () => {
+          box.innerHTML = `
+            <div class="chul-cert">
+              <small>peplaz agency · est. ${D.foundedYear}</small>
+              <h3>Certificate of Chul Excellence</h3>
+              <p>This certifies that <b>${esc(OS.user)}</b> has completed <b>Chuler Jotno 101</b><br/>with a score of ${score}/${quiz.length} (CGPA equivalent: ${D.cgpa}).</p>
+              <div class="chul-sign">${ico("award")} signed, the peplaz</div>
+            </div>`;
+          OS.confetti(220, true);
+        };
+        ask();
+      }
+    },
+  });
+
   function viewer(host, items, idx, auto) {
     sfx("open");
     const v = el("div", "viewer");
@@ -571,6 +659,7 @@
     ["open <app>", "open an app, e.g. open cake"],
     ["apps", "list app names you can open"],
     ["mute / unmute", "turn sound effects off / on"],
+    ["credits", "who built this (and who to blame)"],
     ["clear", "clear the screen"],
     ["exit", "close Terminal"],
   ];
@@ -626,6 +715,7 @@
         apps: () => Object.values(OS.apps).filter((a) => a.dock || a.desk).map((a) => `  <span class="cyn">${esc(a.id)}</span>  ${esc(a.name)}`).join("\n"),
         mute: () => { if (!SFX.muted) SFX.toggle(); return "sound effects off"; },
         unmute: () => { if (SFX.muted) SFX.toggle(); sfx("pop"); return "sound effects on"; },
+        credits: () => `PeplaOS 25, built with love by <span class="yel">${esc(D.author)}</span>\nfor the peplaz agency (est. ${D.foundedYear})\n<span class="cyn">bugs khoma korben.</span>`,
         please: () => `<span class="yel">aww. hidden commands: </span>love, gunnu, pecho`,
         love: () => `peplaz love you. (this message will self-destruct)`,
         gunnu: () => `Drinking is injurious to health. — Srihorir Thakuma Ganjeri Gunnu`,
@@ -635,7 +725,7 @@
       const files = {
         "secrets.txt": "1. He cried during the Schitt's Creek finale.\n2. He has a seal plushie (probably).\n3. The peplaz love him. Don't tell him.",
         "wish.txt": "Happy 25th from the peplaz — now go open the Top Secret folder.",
-        "peplaz_lore.md": "# peplaz lore\n- an agency, not a council. est. 2019\n- 4 pigs\n- 1 brain cell\n- infinite group chat messages\n- 0 completed plans",
+        "peplaz_lore.md": "# peplaz lore\n- a professional agency. est. 2019\n- 4 pigs\n- 1 brain cell\n- infinite group chat messages\n- 0 completed plans",
         "wine_list.txt": "1. Red, bold, expensive\n2. Red, bold, slightly less expensive\n3. Whatever the peplaz bring (he'll judge it)",
       };
       const history = []; let hi = 0;
@@ -680,6 +770,7 @@
           <h3>Terminal commands</h3>
           <table class="help-table">${OS.TERM_HELP.map(([c, d]) => `<tr><td><code>${esc(c)}</code></td><td>${esc(d)}</td></tr>`).join("")}</table>
           <p style="margin-top:14px"><button class="btn primary" data-term>${ico("square-terminal")} Open Terminal</button></p>
+          <p class="credit">${ico("bug")} Found a bug? PeplaOS was built by ${esc(D.author)}. Bugs khoma korben.</p>
         </div>`;
       $("[data-term]", body).onclick = () => OS.open("terminal");
     },
@@ -705,6 +796,7 @@
             <tr><td>Serial</td><td>PEPLA-PIG-DS3-0025</td></tr>
             <tr><td>Warranty</td><td>Expired. Peplaz offer lifetime support anyway.</td></tr>
           </table>
+          <p class="credit">${ico("bug")} Built by ${esc(D.author)}. Bugs khoma korben.</p>
         </div>`;
     },
   });

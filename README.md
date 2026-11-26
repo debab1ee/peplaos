@@ -11,6 +11,16 @@ A fake Mac-style operating system for Punnu's 25th birthday, made by the peplaz.
 - **Voice notes** → put `.mp3` files in `audio/` and list them under `sounds` in `js/data.js`.
   Convert WhatsApp `.ogg`/`.opus` with: `ffmpeg -i in.ogg -ac 1 -b:a 96k audio/name.mp3`
 
+## Tests
+- Static checks (data, files, captions, banned words):
+  ```
+  node tests/check.js
+  ```
+- In-browser smoke test: open the site with `?smoke` (e.g. http://localhost:5525/?smoke).
+  It logs in, opens every app and prints a results table in the console.
+
+Built by Debabideb. Bugs khoma korben.
+
 ## Run locally
 ```
 python -m http.server 5525

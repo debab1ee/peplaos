@@ -6,6 +6,7 @@
 
 window.PEPLA = {
   birthdayBoy: "Punnu",
+  author: "Debabideb",   // shown in credits: "bugs khoma korben"
   age: 25,
   cgpa: "9.17",        // IIM Mumbai, as announced in the group chat
   foundedYear: 2019,   // peplaz agency, est.
@@ -93,6 +94,7 @@ window.PEPLA = {
   // ---- SealTube ---------------------------------------------------------
   // YouTube video IDs (the part after watch?v=). First one plays first.
   sealVideos: [
+    { id: "268CLEqR1b0", title: "The official birthday seal" },
     { id: "7Frz3J25ZRw", title: "Baby seal tries to talk (it's you)" },
     { id: "xwfFwSKs1io", title: "Seal yawns, smiles, sleeps (you after one glass of red)" },
     { id: "sRlbTwmifd4", title: "Seal gets up close and personal" },
