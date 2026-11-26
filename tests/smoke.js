@@ -20,10 +20,12 @@
   document.querySelectorAll(".win-body").forEach((b) => { if (b.textContent.includes("has crashed")) crashed.push(b.closest(".win").querySelector(".win-title").textContent); });
   check("every app opens without crashing", !crashed.length, crashed.join(", "));
 
+  await sleep(1200); // let late notifications render their icons
   const unrendered = [...new Set([...document.querySelectorAll("i[data-lucide]")].map((i) => i.dataset.lucide))];
   check("every icon renders", !unrendered.length, unrendered.join(", "));
 
-  check("photos: albums render", document.querySelectorAll(".ph-album").length === (window.PEPLA_ALBUMS || []).length);
+  check("photos: albums render (trash album hidden)", document.querySelectorAll(".ph-album").length === (window.PEPLA_ALBUMS || []).filter((a) => !a.trash).length);
+  check("trash shows only the embarrassing album", document.querySelectorAll(".trash-grid .ph-tile").length === OS.trashItems.length && OS.trashItems.length > 0 && !OS.photos.some((p) => OS.trashItems.some((t) => t.file === p.file)));
   check("top secret unlocked after exploring", OS.unlocked());
 
   const inp = document.querySelector(".term input");

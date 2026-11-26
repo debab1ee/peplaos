@@ -26,25 +26,29 @@ window.PEPLA = {
   groupAliases: ["ds³", "peplapigs"],
   members: ["punnu", "gunnu", "munnu", "chullu"],
 
-  // ---- Voice notes (files in /audio) -------------------------------
-  // Rename the labels to what's actually said in each one.
+  // ---- His song (audio/doraemon.mp3) --------------------------------
+  // Played in the PeplaTunes app and when he blows out the cake candles.
   sounds: [
-    { id: "vm1", file: "audio/vm1.mp3", label: "VM 1",  icon: "mic" },
-    { id: "vm2", file: "audio/vm2.mp3", label: "VM 2",  icon: "flame" },
-    { id: "vm3", file: "audio/vm3.mp3", label: "VM 3",  icon: "skull" },
-    { id: "vm4", file: "audio/vm4.mp3", label: "VM 4",  icon: "megaphone" },
+    { id: "song", file: "audio/doraemon.mp3", label: "Doraemon Theme (Sou's Version)", icon: "music" },
   ],
-  // Which voice note plays for system events (use an id from above, or null)
+  song: {
+    id: "song",
+    title: "Doraemon Theme (Sou's Version)",
+    artist: "Punnu",
+    album: "Live from the Group Chat",
+    cover: "WhatsApp Image 2026-11-23 at 15.55.37 (39).jpeg",
+  },
+  // Which sound plays for system events (an id from above, or null)
   systemSounds: {
     login: null,          // no sound at startup
-    celebrate: "vm1",     // cake candles out / letter opened
-    error: "vm2",
-    busy:  "vm3",
-    trash: "vm4",
+    celebrate: "song",    // cake candles blown out
+    error: null,
+    busy: null,
+    trash: null,
   },
 
   // ---- Messages.app ---------------------------------------------------
-  // One thread per friend (color = avatar colour). Each item is text, or { voice: "vmX" } for a
+  // One thread per friend (color = avatar colour). Each item is text, or { voice: "song" } for a
   // voice bubble, or { image: "images/whatever.jpeg" }.
   friends: [
     {
@@ -66,15 +70,6 @@ window.PEPLA = {
       messages: [
         "bhalo kore kaj kor ar amar dayitto ne",
         "aro 25 bochhor amake call kore fupiye fupiye kaand",
-      ],
-    },
-    {
-      name: "peplaz (voice notes)", color: "#5e5ce6", icon: "mic",
-      messages: [
-        { voice: "vm1" },
-        { voice: "vm2" },
-        { voice: "vm3" },
-        { voice: "vm4" },
       ],
     },
   ],

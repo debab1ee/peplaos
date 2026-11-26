@@ -24,6 +24,12 @@
     if (rest.length) out.push({ title: "More memories", subtitle: "fresh evidence", icon: "sparkles", items: rest });
     return out;
   })();
+  // Albums flagged "trash" live only in the Trash, never in Photos / widgets / the letter.
+  const trashItems = albums.filter((a) => a.trash).flatMap((a) => a.items);
+  const trashFiles = new Set(trashItems.map((m) => m.file));
+  OS.trashItems = trashItems;
+  OS.photos = OS.photos.filter((m) => !trashFiles.has(m.file));
+  albums.splice(0, albums.length, ...albums.filter((a) => !a.trash));
   const allItems = albums.flatMap((a) => a.items);
   OS.captionFor = (file) => (allItems.find((m) => m.file === file) || {}).caption || "";
 
@@ -121,7 +127,7 @@
     render(body) {
       const lessons = [
         { t: "The Foundation", tip: "Shampoo twice a week, not daily. Your scalp has feelings, and they are expensive.", m: hairPick("fan club") },
-        { t: "Conditioner Is Not Optional", tip: "Mid-length to ends only. Leave it for 3 minutes. Use that time to rewatch one Succession scene.", m: hairPick("before the transformation") },
+        { t: "Conditioner Is Not Optional", tip: "Mid-length to ends only. Leave it for 3 minutes. Use that time to rewatch your favourite father-daughter scene.", m: hairPick("before the transformation") },
         { t: "The Salon Commitment", tip: "Colour cap on, fear in eyes, results worth it. Never trust a friend with scissors (looking at the peplaz).", m: hairPick("fear in eyes") },
         { t: "Never Towel-Rub", tip: "Pat it dry. Rubbing causes frizz, and frizz causes 'woke up like this' photos.", m: hairPick("woke up") },
         { t: "Sleep Is Styling", tip: "Silk pillowcase recommended. Sleeping upright on a chair also works, apparently.", m: hairPick("sleep") },
@@ -326,26 +332,70 @@
     return el("div", "bubble", "?");
   }
 
-  /* ================= SOUNDBOARD ================= */
-  const sbColors = ["#ff5fa2", "#ffb000", "#06d6a0", "#118ab2", "#9d6bff", "#ef476f", "#2ec4b6", "#ff7f11"];
-  OS.register("soundboard", {
-    name: "Peplaz Soundboard", title: "Peplaz Soundboard", icon: "audio-lines", color: "linear-gradient(#ff8a5b,#ff3d71)", dock: true, w: 560, h: 420,
-    render(body) {
-      body.innerHTML = `<div class="sb"></div>`;
-      const g = $(".sb", body);
-      D.sounds.forEach((s, i) => {
-        const b = el("button", "sb-btn", `<span class="e">${ico(s.icon || "mic")}</span>${esc(s.label)}`);
-        b.style.background = sbColors[i % sbColors.length];
-        b.onclick = () => {
-          const a = OS.play(s.id);
-          g.querySelectorAll(".sb-btn").forEach((x) => x.classList.remove("playing"));
-          b.classList.add("playing");
-          if (a) a.onended = () => b.classList.remove("playing");
-          else setTimeout(() => b.classList.remove("playing"), 400);
-        };
-        g.appendChild(b);
-      });
+  /* ================= PEPLATUNES (his song) ================= */
+  OS.register("music", {
+    name: "PeplaTunes", title: "PeplaTunes", icon: "music", color: "linear-gradient(#ff5f7e,#c2185b)", dock: true, w: 760, h: 540,
+    render(body, win) {
+      const S = D.song;
+      const cover = OS.media.find((m) => m.file === S.cover) || OS.photos[0];
+      const streams = (25000000 + Math.floor(Math.random() * 999999)).toLocaleString();
+      body.innerHTML = `
+        <div class="tunes">
+          <div class="tunes-bg" style="background-image:url('${cover ? cover.src : ""}')"></div>
+          <div class="tunes-in">
+            <div class="tunes-art"><img src="${cover ? cover.src : ""}" alt="" /><div class="tunes-vinyl"></div></div>
+            <div class="tunes-info">
+              <small>${ico("badge-check")} Verified artist · #1 on the peplaz agency charts</small>
+              <h2>${esc(S.title)}</h2>
+              <p class="tunes-artist">${esc(S.artist)} · ${esc(S.album)}</p>
+              <div class="tunes-eq">${Array.from({ length: 24 }, () => "<i></i>").join("")}</div>
+              <div class="tunes-bar"><span class="t-cur">0:00</span><div class="t-track"><i></i></div><span class="t-dur">0:00</span></div>
+              <div class="tunes-ctrl">
+                <button class="t-btn" data-back aria-label="Restart">${ico("skip-back")}</button>
+                <button class="t-btn t-play" aria-label="Play">${ico("play")}</button>
+                <button class="t-btn" data-loop aria-label="Repeat">${ico("repeat")}</button>
+              </div>
+              <div class="tunes-stats">
+                <span>${ico("headphones")} ${streams} streams</span>
+                <span>${ico("heart")} loved by 4 peplapigs</span>
+              </div>
+              <div class="tunes-lyrics"><b>Lyrics</b><br/>Unavailable. He doesn't know them either.</div>
+            </div>
+          </div>
+        </div>`;
+      const snd = D.sounds.find((s) => s.id === S.id);
+      const a = snd ? new Audio(snd.file) : null;
+      const playBtn = $(".t-play", body), track = $(".t-track", body), fill = $(".t-track i", body);
+      const fmt = (t) => (isFinite(t) ? `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}` : "0:00");
+      let loop = false, raf, wasPlaying = false;
+      const tick = () => {
+        if (!a) return;
+        fill.style.width = (a.duration ? (a.currentTime / a.duration) * 100 : 0) + "%";
+        $(".t-cur", body).textContent = fmt(a.currentTime);
+        $(".t-dur", body).textContent = fmt(a.duration);
+        const playing = !a.paused && !a.ended;
+        if (playing !== wasPlaying) {
+          wasPlaying = playing;
+          body.querySelector(".tunes").classList.toggle("playing", playing);
+          playBtn.innerHTML = ico(playing ? "pause" : "play");
+        }
+        if (playing) raf = requestAnimationFrame(tick);
+      };
+      if (a) {
+        a.onended = () => { if (loop) { a.currentTime = 0; a.play(); tick(); } else tick(); };
+        a.onloadedmetadata = tick;
+      }
+      playBtn.onclick = () => {
+        if (!a) return;
+        if (a.paused) { a.play().catch(() => {}); requestAnimationFrame(tick); } else { a.pause(); tick(); }
+      };
+      $("[data-back]", body).onclick = () => { if (a) { a.currentTime = 0; tick(); } };
+      $("[data-loop]", body).onclick = (e) => { loop = !loop; e.currentTarget.classList.toggle("on", loop); sfx("click"); };
+      track.onclick = (e) => { if (!a || !a.duration) return; const r = track.getBoundingClientRect(); a.currentTime = ((e.clientX - r.left) / r.width) * a.duration; tick(); };
+      win._stopSong = () => { cancelAnimationFrame(raf); if (a) { a.pause(); a.currentTime = 0; } };
+      tick();
     },
+    onClose(win) { win._stopSong && win._stopSong(); return true; },
   });
 
   /* ================= MISHTI ================= */
@@ -658,6 +708,7 @@
     ["rm -rf succession", "try to delete Succession (good luck)"],
     ["open <app>", "open an app, e.g. open cake"],
     ["apps", "list app names you can open"],
+    ["sing", "play his Doraemon cover"],
     ["mute / unmute", "turn sound effects off / on"],
     ["credits", "who built this (and who to blame)"],
     ["clear", "clear the screen"],
@@ -713,6 +764,7 @@
         "nonta / meetha": () => `pick one. (you can't)`,
         "rm -rf succession": () => { sfx("error"); return `<span class="err">rm: succession: Permission denied. The user has protected this file with his life.</span>`; },
         apps: () => Object.values(OS.apps).filter((a) => a.dock || a.desk).map((a) => `  <span class="cyn">${esc(a.id)}</span>  ${esc(a.name)}`).join("\n"),
+        sing: () => { setTimeout(() => OS.open("music"), 300); return "opening PeplaTunes… now playing: Doraemon Theme (Sou's Version)"; },
         mute: () => { if (!SFX.muted) SFX.toggle(); return "sound effects off"; },
         unmute: () => { if (SFX.muted) SFX.toggle(); sfx("pop"); return "sound effects on"; },
         credits: () => `PeplaOS 25, built with love by <span class="yel">${esc(D.author)}</span>\nfor the peplaz agency (est. ${D.foundedYear})\n<span class="cyn">bugs khoma korben.</span>`,
@@ -805,11 +857,11 @@
   OS.register("trash", {
     name: "Trash", title: "Trash — deleted_embarrassing/", icon: "trash-2", desk: true, deskName: "Trash", w: 640, h: 460,
     render(body) {
-      const pics = OS.photos.slice().sort(() => Math.random() - 0.5).slice(0, 12);
+      const pics = OS.trashItems.slice();
       body.innerHTML = `
         <div class="trash-top"><span>${pics.length} items you thought you deleted</span><button class="btn">Empty Trash</button></div>
-        <div class="grid">${pics.map((p) => `<div class="cell"><img src="${p.src}" loading="lazy" alt="" /></div>`).join("") || '<div class="pad muted">empty… for now</div>'}</div>`;
-      body.querySelectorAll(".cell").forEach((c, i) => (c.onclick = () => viewer(body, pics, i, false)));
+        <div class="ph-masonry trash-grid">${pics.map((p) => `<figure class="ph-tile">${p.video ? `<video src="${p.src}#t=0.8" muted preload="metadata" playsinline></video>` : `<img src="${p.src}" loading="lazy" alt="" />`}<figcaption>${esc(p.caption || "")}</figcaption></figure>`).join("") || '<div class="pad muted">empty… for now</div>'}</div>`;
+      body.querySelectorAll(".trash-grid .ph-tile").forEach((c, i) => (c.onclick = () => viewer(body, pics, i, false)));
       $(".trash-top .btn", body).onclick = () => {
         OS.sys("trash");
         OS.dialog({ icon: "trash-2", title: "Empty Trash?", text: "These photos will be permanently uploaded to the peplaz group chat instead.",
@@ -858,7 +910,6 @@
         $(".letter-wrap", body).style.alignItems = "flex-start";
         sfx("unlock");
         OS.confetti(300, true);
-        OS.sys("celebrate");
       };
     },
   });

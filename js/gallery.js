@@ -1,6 +1,7 @@
 /* =========================================================
    Photos.app albums. Edit titles/captions freely.
    Any file in /images not listed here shows up in "More memories".
+   An album with "trash": true is hidden from Photos and shown in the Trash instead.
    ========================================================= */
 window.PEPLA_ALBUMS = [
   {
@@ -277,9 +278,9 @@ window.PEPLA_ALBUMS = [
     ]
   },
   {
-    "title": "Face Hall of Fame",
-    "subtitle": "for blackmail purposes",
-    "icon": "laugh",
+    "title": "deleted_embarrassing",
+    "subtitle": "he thought he deleted these",
+    "icon": "trash-2",
     "items": [
       {
         "file": "WhatsApp Image 2026-11-23 at 15.55.37 (15).jpeg",
@@ -337,7 +338,8 @@ window.PEPLA_ALBUMS = [
         "file": "WhatsApp Image 2026-11-23 at 16.03.20 (25).jpeg",
         "caption": "Asleep. Unaware this would be posted."
       }
-    ]
+    ],
+    "trash": true
   },
   {
     "title": "Chaos Mode",

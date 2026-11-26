@@ -29,7 +29,7 @@ test("every JS file parses", () => {
 test("index.html loads every script in js/", () => {
   const html = fs.readFileSync(rel("index.html"), "utf8");
   for (const f of fs.readdirSync(rel("js")).filter((f) => f.endsWith(".js")))
-    assert(html.includes(`js/${f}`), `index.html does not load js/${f}`);
+    assert(html.includes(`js/${f}?`) || html.includes(`js/${f}"`), `index.html does not load js/${f}`);
 });
 
 test("images.js matches the images/ folder", () => {
