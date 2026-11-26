@@ -398,51 +398,202 @@
     onClose(win) { win._stopSong && win._stopSong(); return true; },
   });
 
-  /* ================= MISHTI ================= */
-  let mishtiDone = false;
+  /* ================= MISHTI BHANDAR (catch game) ================= */
+  // Catch the right kind of food in the handi. Every few seconds the shopkeeper
+  // yells "ei nonta meetha khabi?" and what you should catch flips.
+  const SWEETS = [
+    { name: "roshogolla", kind: "meetha", draw: (c, r) => { c.fillStyle = "#fffaf0"; c.beginPath(); c.arc(0, 0, r, 0, 7); c.fill(); c.strokeStyle = "#e8d9b8"; c.lineWidth = 2; c.stroke(); c.fillStyle = "rgba(255,255,255,.9)"; c.beginPath(); c.arc(-r * .35, -r * .35, r * .28, 0, 7); c.fill(); } },
+    { name: "sandesh", kind: "meetha", draw: (c, r) => { c.fillStyle = "#f1d9a6"; rr(c, -r, -r * .75, r * 2, r * 1.5, r * .45); c.fill(); c.strokeStyle = "#c9a45c"; c.lineWidth = 2; for (let i = -1; i <= 1; i++) { c.beginPath(); c.arc(i * r * .55, 0, r * .22, 0, 7); c.stroke(); } } },
+    { name: "mishti doi", kind: "meetha", draw: (c, r) => { c.fillStyle = "#b5532a"; c.beginPath(); c.moveTo(-r, -r * .4); c.lineTo(r, -r * .4); c.lineTo(r * .7, r * .8); c.lineTo(-r * .7, r * .8); c.closePath(); c.fill(); c.fillStyle = "#f6e3c2"; c.beginPath(); c.ellipse(0, -r * .4, r, r * .3, 0, 0, 7); c.fill(); } },
+    { name: "chomchom", kind: "meetha", draw: (c, r) => { c.fillStyle = "#ff9fb7"; c.beginPath(); c.ellipse(0, 0, r * 1.15, r * .7, 0, 0, 7); c.fill(); c.fillStyle = "#fff"; for (let i = 0; i < 7; i++) { c.beginPath(); c.arc((Math.sin(i * 2.1) * r * .8), (Math.cos(i * 1.7) * r * .4), 1.6, 0, 7); c.fill(); } } },
+    { name: "singara", kind: "nonta", draw: (c, r) => { c.fillStyle = "#d99a2b"; c.beginPath(); c.moveTo(0, -r); c.lineTo(r, r * .8); c.lineTo(-r, r * .8); c.closePath(); c.fill(); c.strokeStyle = "#a86f14"; c.lineWidth = 2; c.stroke(); c.beginPath(); c.moveTo(-r * .5, r * .2); c.lineTo(r * .5, r * .2); c.stroke(); } },
+    { name: "chanachur", kind: "nonta", draw: (c, r) => { c.fillStyle = "#e63946"; rr(c, -r * .75, -r, r * 1.5, r * 2, 4); c.fill(); c.fillStyle = "#ffd166"; rr(c, -r * .5, -r * .3, r, r * .6, 3); c.fill(); c.fillStyle = "#8a4b0f"; for (let i = 0; i < 5; i++) { c.beginPath(); c.arc(-r * .35 + i * r * .18, (i % 2 ? .1 : -.1) * r, 1.8, 0, 7); c.fill(); } } },
+    { name: "jhalmuri", kind: "nonta", draw: (c, r) => { c.fillStyle = "#f4e1b0"; c.beginPath(); c.moveTo(-r, -r * .6); c.lineTo(r, -r * .6); c.lineTo(0, r); c.closePath(); c.fill(); c.fillStyle = "#fffbe8"; for (let i = 0; i < 6; i++) { c.beginPath(); c.arc(-r * .6 + i * r * .24, -r * .6 - 2, 3, 0, 7); c.fill(); } c.fillStyle = "#2a9d3f"; c.beginPath(); c.arc(r * .2, -r * .75, 2.5, 0, 7); c.fill(); } },
+    { name: "ghoti (bent)", kind: "nonta", draw: (c, r) => { c.fillStyle = "#b8bec7"; c.beginPath(); c.ellipse(0, r * .2, r * .9, r * .75, -0.3, 0, 7); c.fill(); c.fillStyle = "#9aa1ab"; rr(c, -r * .45, -r * .95, r * .9, r * .4, 4); c.fill(); c.strokeStyle = "#7b828c"; c.lineWidth = 2; c.beginPath(); c.moveTo(-r * .5, r * .1); c.quadraticCurveTo(0, r * .45, r * .55, -r * .05); c.stroke(); } },
+  ];
+  function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+
   OS.register("mishti", {
-    name: "Mishti.app", title: "Mishti Bhandar", icon: "candy", color: "linear-gradient(#ffe29a,#ff9a62)", dock: true, w: 460, h: 440,
-    render(body) {
-      let n = 0, flip = false;
+    name: "Mishti Bhandar", title: "Mishti Bhandar — catch the mishti", icon: "candy", color: "linear-gradient(#ffe29a,#ff9a62)", dock: true, w: 560, h: 640,
+    render(body, win) {
+      const GOAL = 25, TIME = 75;
       body.innerHTML = `
-        <div class="mishti">
-          <div class="shop">${ico("store")}</div>
-          <h2>Welcome to Mishti Bhandar</h2>
-          <div class="q"></div>
-          <div class="row"></div>
-          <div class="count"></div>
+        <div class="mb-game">
+          <div class="mb-hud">
+            <div class="mb-score"><b>0</b><span>/ ${GOAL}</span></div>
+            <div class="mb-mode"><small>Catch</small><b>MEETHA</b></div>
+            <div class="mb-time">${ico("timer")} <span>${TIME}</span>s</div>
+          </div>
+          <div class="mb-stage">
+            <canvas></canvas>
+            <div class="mb-shout">ei nonta meetha khabi?</div>
+            <div class="mb-overlay mb-start">
+              <div class="mb-shop">${ico("store")}</div>
+              <h2>Mishti Bhandar</h2>
+              <p>Move the handi to catch <b>meetha</b> (roshogolla, sandesh, mishti doi, chomchom) and dodge the <b>nonta</b> (singara, chanachur, jhalmuri, bent ghotis).</p>
+              <p>But every few seconds the shopkeeper yells <i>"ei nonta meetha khabi?"</i> and it <b>flips</b>. Get ${GOAL} points in ${TIME} seconds.</p>
+              <p class="muted">Mouse, arrow keys or drag on your phone.</p>
+              <button class="btn primary mb-go">${ico("play")} Start</button>
+            </div>
+          </div>
         </div>`;
-      const q = $(".q", body), row = $(".row", body), cnt = $(".count", body);
-      const draw = () => {
-        q.textContent = flip ? "ei meetha nonta khabi?" : "ei nonta meetha khabi?";
-        row.innerHTML = "";
-        const a = el("button", "nonta", `${ico("cookie")} Nonta`), b = el("button", "meetha", `${ico("candy")} Meetha`);
-        (flip ? [b, a] : [a, b]).forEach((x) => { x.onclick = pick; row.appendChild(x); });
-        cnt.textContent = `Decisions made: ${n} · Sweets received: 0`;
+      const cv = $("canvas", body), cx = cv.getContext("2d"), stage = $(".mb-stage", body);
+      const scoreEl = $(".mb-score b", body), modeEl = $(".mb-mode", body), timeEl = $(".mb-time span", body), shout = $(".mb-shout", body);
+      let W = 0, H = 0, dpr = 1;
+      const resize = () => {
+        dpr = Math.min(2, window.devicePixelRatio || 1);
+        W = stage.clientWidth; H = stage.clientHeight;
+        cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + "px"; cv.style.height = H + "px";
+        cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        handi.y = H - 46;
+        handi.x = Math.min(Math.max(handi.x || W / 2, 40), W - 40);
       };
-      const pick = () => {
-        n++; flip = !flip;
-        if (n >= 6) {
-          mishtiDone = true;
-          sfx("error");
-          OS.sys("error");
-          q.innerHTML = `<span style="color:#c1121f">ghoti bekiye debo mona</span>`;
-          row.innerHTML = "";
-          cnt.textContent = "Fine. You get both. Nonta-meetha. Happy birthday.";
-          setTimeout(() => { OS.confetti(120); row.innerHTML = `<div class="mishti-prize">${ico("cookie")}${ico("candy")}</div>`; }, 600);
-          return;
+      const handi = { x: 0, y: 0, w: 84, target: null };
+      const ro = new ResizeObserver(resize); ro.observe(stage);
+
+      let items = [], pops = [], score = 0, want = "meetha", running = false, last = 0, spawnT = 0, nextSwap = 0, warnAt = 0, endAt = 0, raf = 0, keys = {};
+      const setMode = (m) => {
+        want = m;
+        $("b", modeEl).textContent = m.toUpperCase();
+        modeEl.classList.toggle("nonta", m === "nonta");
+      };
+      const start = () => {
+        sfx("open");
+        items = []; pops = []; score = 0; scoreEl.textContent = 0; setMode("meetha");
+        body.querySelectorAll(".mb-overlay").forEach((o) => o.remove());
+        const now = performance.now();
+        last = now; spawnT = 0; nextSwap = now + 9000; warnAt = nextSwap - 1500; endAt = now + TIME * 1000;
+        running = true; win._playing = true;
+        raf = requestAnimationFrame(loop);
+      };
+      $(".mb-go", body).onclick = start;
+
+      const end = (won) => {
+        running = false; win._playing = false;
+        cancelAnimationFrame(raf);
+        const o = el("div", "mb-overlay");
+        if (won) {
+          o.innerHTML = `
+            <div class="mb-coupon">
+              <small>peplaz agency · est. ${D.foundedYear}</small>
+              <h2>Lifetime Free Mishti</h2>
+              <p>This voucher entitles <b>${esc(OS.user)}</b> to unlimited mishti, forever.</p>
+              <p class="muted">Terms: must be shared with the peplaz. Nonta not included. Void if he says "ami ektu byasto achi".</p>
+            </div>
+            <button class="btn primary mb-go">${ico("rotate-ccw")} Play again</button>`;
+          OS.confetti(260, true); sfx("unlock");
+        } else {
+          o.innerHTML = `
+            <div class="mb-shop angry">${ico("angry")}</div>
+            <h2>ghoti bekiye debo mona</h2>
+            <p>Only ${score} / ${GOAL}. The shopkeeper is disappointed.</p>
+            <button class="btn primary mb-go">${ico("rotate-ccw")} Try again</button>`;
+          sfx("error"); OS.sys("error");
         }
-        sfx("swap");
-        draw();
+        stage.appendChild(o);
+        $(".mb-go", o).onclick = start;
       };
-      draw();
+
+      const spawn = (t) => {
+        const s = rand(SWEETS);
+        const speed = 120 + Math.min(220, (t / 1000) * 3.2) + Math.random() * 60;
+        items.push({ s, x: 30 + Math.random() * (W - 60), y: -30, r: 17, vy: speed, rot: Math.random() * 6, vr: (Math.random() - .5) * 2 });
+      };
+
+      function loop(now) {
+        if (!running) return;
+        const dt = Math.min(0.05, (now - last) / 1000); last = now;
+        const elapsed = TIME * 1000 - (endAt - now);
+
+        // controls
+        if (keys.ArrowLeft) handi.x -= 520 * dt;
+        if (keys.ArrowRight) handi.x += 520 * dt;
+        if (handi.target != null) handi.x += (handi.target - handi.x) * Math.min(1, dt * 18);
+        handi.x = Math.min(Math.max(handi.x, handi.w / 2), W - handi.w / 2);
+
+        // spawning
+        spawnT -= dt;
+        if (spawnT <= 0) { spawn(elapsed); spawnT = Math.max(0.32, 0.85 - elapsed / 90000); }
+
+        // the shopkeeper flips it
+        if (now >= warnAt && warnAt) { shout.classList.add("show"); sfx("notify"); warnAt = 0; }
+        if (now >= nextSwap) {
+          setMode(want === "meetha" ? "nonta" : "meetha");
+          sfx("swap");
+          setTimeout(() => shout.classList.remove("show"), 900);
+          nextSwap = now + 7000 + Math.random() * 5000; warnAt = nextSwap - 1500;
+        }
+
+        // physics + catching
+        for (const it of items) {
+          it.y += it.vy * dt; it.rot += it.vr * dt;
+          if (!it.done && it.y > handi.y - 18 && it.y < handi.y + 10 && Math.abs(it.x - handi.x) < handi.w / 2 + 6) {
+            it.done = true;
+            const good = it.s.kind === want;
+            score = Math.max(0, score + (good ? 1 : -2));
+            scoreEl.textContent = score;
+            pops.push({ x: it.x, y: handi.y - 30, t: 0, txt: good ? "+1" : "-2", good });
+            sfx(good ? "pop" : "error");
+            if (!good) { stage.classList.remove("hit"); void stage.offsetWidth; stage.classList.add("hit"); }
+            if (score >= GOAL) return end(true);
+          }
+        }
+        items = items.filter((it) => !it.done && it.y < H + 40);
+        const left = Math.max(0, Math.ceil((endAt - now) / 1000));
+        timeEl.textContent = left;
+        if (left <= 0) return end(false);
+
+        draw();
+        raf = requestAnimationFrame(loop);
+      }
+
+      function draw() {
+        cx.clearRect(0, 0, W, H);
+        // shop shelf stripes
+        cx.fillStyle = "rgba(255,255,255,.25)";
+        for (let y = 40; y < H - 80; y += 70) cx.fillRect(0, y, W, 2);
+        for (const it of items) {
+          cx.save(); cx.translate(it.x, it.y); cx.rotate(it.rot * 0.3);
+          it.s.draw(cx, it.r);
+          cx.restore();
+          cx.font = "600 10px Inter, sans-serif"; cx.textAlign = "center";
+          cx.fillStyle = it.s.kind === "meetha" ? "#8a2c55" : "#7a4a00";
+          cx.fillText(it.s.name, it.x, it.y + it.r + 13);
+        }
+        // the handi
+        const { x, y, w } = handi;
+        cx.fillStyle = "#9c4a1a";
+        cx.beginPath(); cx.moveTo(x - w / 2, y - 8); cx.quadraticCurveTo(x - w / 2 - 6, y + 30, x, y + 34); cx.quadraticCurveTo(x + w / 2 + 6, y + 30, x + w / 2, y - 8); cx.closePath(); cx.fill();
+        cx.fillStyle = "#7a3510"; cx.beginPath(); cx.ellipse(x, y - 8, w / 2, 9, 0, 0, 7); cx.fill();
+        cx.fillStyle = "#c86a30"; cx.fillRect(x - w / 2 + 6, y + 6, w - 12, 4);
+        // score pops
+        for (const p of pops) {
+          p.t += 0.016; cx.globalAlpha = Math.max(0, 1 - p.t * 1.4);
+          cx.font = "800 18px Inter, sans-serif"; cx.fillStyle = p.good ? "#1f8a4c" : "#d62828";
+          cx.fillText(p.txt, p.x, p.y - p.t * 50); cx.globalAlpha = 1;
+        }
+        pops = pops.filter((p) => p.t < 0.8);
+      }
+
+      // input
+      const toLocal = (clientX) => clientX - cv.getBoundingClientRect().left;
+      stage.addEventListener("pointermove", (e) => { handi.target = toLocal(e.clientX); });
+      stage.addEventListener("pointerdown", (e) => { handi.target = toLocal(e.clientX); });
+      stage.addEventListener("touchmove", (e) => { if (running) { e.preventDefault(); handi.target = toLocal(e.touches[0].clientX); } }, { passive: false });
+      const kd = (e) => { if (!running || !OS.windows.has("mishti")) return; if (e.key === "ArrowLeft" || e.key === "ArrowRight") { keys[e.key] = true; handi.target = null; e.preventDefault(); } };
+      const ku = (e) => { keys[e.key] = false; };
+      document.addEventListener("keydown", kd); document.addEventListener("keyup", ku);
+      win._stopGame = () => { running = false; cancelAnimationFrame(raf); ro.disconnect(); document.removeEventListener("keydown", kd); document.removeEventListener("keyup", ku); };
+      resize(); draw();
     },
-    onClose() {
-      if (mishtiDone) return true;
-      mishtiDone = true;
-      OS.sys("error");
-      OS.dialog({ icon: "angry", title: "ghoti bekiye debo mona", text: "You walked out of the mishti shop without choosing? Choose next time.", buttons: [{ label: "Sorry", primary: true }] });
-      return false;
+    onClose(win) {
+      if (win._playing && !win._warned) {
+        win._warned = true;
+        OS.dialog({ icon: "angry", title: "ghoti bekiye debo mona", text: "Leaving the mishti shop in the middle of a game? Close again if you really mean it.", buttons: [{ label: "Sorry", primary: true }] });
+        return false;
+      }
+      win._stopGame && win._stopGame();
+      return true;
     },
   });
 
@@ -464,7 +615,14 @@
             <button class="btn primary" data-mic>${ico("mic")} Blow into the mic</button>
             <button class="btn" data-relight>${ico("flame")} Relight</button>
           </div>
+          <div class="blow-meter"><i></i></div>
           <div class="hint">or tap the candles. (blowing works best, like everything else you do)</div>
+          <div class="seal-reveal">
+            <img alt="A seal wishing you happy birthday" />
+            <div class="sr-cap">A wild seal has surfaced to wish you a happy birthday.</div>
+            <small class="sr-credit">Photo: Giles Laurent, <a href="https://commons.wikimedia.org/wiki/File:021_Wild_smiling_harbor_seal_at_J%C3%B6kuls%C3%A1rl%C3%B3n_(Iceland)_Photo_by_Giles_Laurent.jpg" target="_blank" rel="noopener">CC BY-SA 4.0</a></small>
+            <button class="btn primary" data-close-seal>${ico("heart")} ork ork, thank you</button>
+          </div>
         </div>`;
       const candles = [...body.querySelectorAll(".candle")];
       let celebrated = false;
@@ -475,42 +633,91 @@
           OS.confetti(260, true);
           OS.sys("celebrate");
           setTimeout(() => OS.notify("sparkles", "Wish received", "Processing… estimated delivery: when Kendall wins.", 6000), 800);
+          setTimeout(() => {                                 // the birthday seal
+            const sr = $(".seal-reveal", body);
+            $("img", sr).src = D.cakeSeal || "assets/seal.jpg";
+            sr.classList.add("show");
+            sfx("seal");
+          }, 1400);
         }
       };
+      $("[data-close-seal]", body).onclick = () => { sfx("click"); $(".seal-reveal", body).classList.remove("show"); };
       const out = (c) => { if (!c.classList.contains("out")) { sfx("blow"); c.classList.add("out"); check(); } };
       candles.forEach((c) => (c.onclick = () => out(c)));
-      $("[data-relight]", body).onclick = () => { sfx("magic"); celebrated = false; candles.forEach((c) => c.classList.remove("out")); };
+      $("[data-relight]", body).onclick = () => { sfx("magic"); celebrated = false; $(".seal-reveal", body).classList.remove("show"); candles.forEach((c) => c.classList.remove("out")); };
 
-      let stream, ctx, rafId;
-      const stopMic = () => { cancelAnimationFrame(rafId); stream && stream.getTracks().forEach((t) => t.stop()); ctx && ctx.close(); stream = ctx = null; };
+      // Mic blowing. Works on phones too:
+      //  - the AudioContext is created inside the tap (iOS needs that) and resumed
+      //  - noise suppression / auto gain are turned off (they filter out blowing)
+      //  - it calibrates to the room's background noise first, then listens for
+      //    a sustained burst of loud low-frequency noise (= blowing)
+      let stream, ctx, timer;
+      const meter = $(".blow-meter", body), meterFill = $(".blow-meter i", body), micBtn = $("[data-mic]", body);
+      const stopMic = () => {
+        clearInterval(timer); timer = null;
+        stream && stream.getTracks().forEach((t) => t.stop());
+        ctx && ctx.close().catch(() => {});
+        stream = ctx = null;
+        meter.classList.remove("on");
+        micBtn.innerHTML = `${ico("mic")} Blow into the mic`;
+      };
       win._stopMic = stopMic;
-      $("[data-mic]", body).onclick = async () => {
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          ctx = new (window.AudioContext || window.webkitAudioContext)();
-          const an = ctx.createAnalyser();
-          an.fftSize = 512;
-          ctx.createMediaStreamSource(stream).connect(an);
-          const data = new Uint8Array(an.fftSize);
-          let loud = 0;
-          OS.notify("mic", "Mic on", "Blow! Hard! Like you're cooling a glass of mulled wine!");
-          const loop = () => {
-            an.getByteTimeDomainData(data);
-            let sum = 0;
-            for (const v of data) sum += ((v - 128) / 128) ** 2;
-            const rms = Math.sqrt(sum / data.length);
-            loud = rms > 0.12 ? loud + 1 : Math.max(0, loud - 1);
-            if (loud > 6) {
-              loud = 0;
-              const lit = candles.filter((c) => !c.classList.contains("out"));
-              if (lit.length) out(rand(lit));
-            }
-            if (stream) rafId = requestAnimationFrame(loop);
-          };
-          loop();
-        } catch {
-          OS.notify("mic-off", "No mic", "Mic blocked. Just tap the candles, you lazy peplapig.");
+      micBtn.onclick = async () => {
+        if (stream) return stopMic();
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !AC) {
+          return OS.notify("mic-off", "No mic here", "This browser can't use the mic. Just tap the candles.");
         }
+        ctx = new AC();                       // must happen inside the tap for iOS
+        ctx.resume && ctx.resume();
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+          });
+        } catch {
+          ctx.close().catch(() => {}); ctx = null;
+          return OS.notify("mic-off", "No mic", "Mic blocked. Allow the microphone, or just tap the candles, you lazy peplapig.");
+        }
+        if (ctx.state === "suspended") await ctx.resume().catch(() => {});
+        const an = ctx.createAnalyser();
+        an.fftSize = 1024;
+        an.smoothingTimeConstant = 0.2;
+        ctx.createMediaStreamSource(stream).connect(an);
+        const freq = new Uint8Array(an.frequencyBinCount);
+        const time = new Uint8Array(an.fftSize);
+        const lowBins = Math.max(4, Math.floor((800 / (ctx.sampleRate / 2)) * an.frequencyBinCount)); // < ~800 Hz
+
+        let baseline = 0, samples = 0, streak = 0, cooldown = 0;
+        const t0 = Date.now();
+        meter.classList.add("on");
+        micBtn.innerHTML = `${ico("mic-off")} Stop listening`;
+        OS.notify("mic", "Listening…", "Blow! Hard! Like you're cooling a glass of mulled wine!");
+        timer = setInterval(() => {
+          an.getByteFrequencyData(freq);
+          an.getByteTimeDomainData(time);
+          let low = 0; for (let i = 1; i < lowBins; i++) low += freq[i];
+          low /= (lowBins - 1) * 255;                       // 0..1 low-frequency energy
+          let sum = 0; for (const v of time) sum += ((v - 128) / 128) ** 2;
+          const rms = Math.sqrt(sum / time.length);         // 0..1 loudness
+          const level = Math.max(low, rms * 2.2);
+
+          if (Date.now() - t0 < 700) {                      // calibrate to the room first
+            baseline = (baseline * samples + level) / ++samples;
+            return;
+          }
+          const threshold = Math.max(0.18, baseline * 2.2 + 0.06);
+          meterFill.style.width = Math.min(100, (level / threshold) * 60) + "%";
+          meter.classList.toggle("hot", level > threshold);
+
+          if (cooldown > 0) { cooldown--; return; }
+          streak = level > threshold ? streak + 1 : Math.max(0, streak - 1);
+          if (streak >= 3) {                                // ~150 ms of sustained blowing
+            streak = 0; cooldown = 4;
+            const lit = candles.filter((c) => !c.classList.contains("out"));
+            if (lit.length) out(rand(lit));
+            if (level > threshold * 1.8 && lit.length > 1) out(rand(lit.filter((c) => !c.classList.contains("out"))));
+          }
+        }, 50);
       };
     },
     onClose(win) { win._stopMic && win._stopMic(); return true; },

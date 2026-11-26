@@ -30,3 +30,7 @@ then open http://localhost:5525
 ## Deploy (GitHub Pages)
 Push this folder to a GitHub repo → Settings → Pages → Deploy from branch → `main` / root.
 (The mic-blowing cake needs https, which Pages gives you.)
+
+## Credits
+- Birthday seal photo (cake.exe): "Wild smiling harbor seal at Jökulsárlón (Iceland)" by Giles Laurent, CC BY-SA 4.0, via Wikimedia Commons.
+- Icons: Lucide (ISC license).

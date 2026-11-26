@@ -501,7 +501,7 @@
     if (/[?&]smoke\b/.test(location.search)) {
       skip = true;
       const s = document.createElement("script");
-      s.src = "tests/smoke.js";
+      s.src = "tests/smoke.js?t=" + Date.now();
       document.body.appendChild(s);
     }
     boot();

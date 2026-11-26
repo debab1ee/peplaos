@@ -42,6 +42,20 @@
   await sleep(2600);
   check("love announcement after 2 glasses", [...document.querySelectorAll(".notif")].some((n) => /love/i.test(n.textContent)), `notifs before=${before}`);
 
+  // cake: blow out every candle -> the birthday seal appears
+  const cakeWin = OS.windows.get("cake");
+  cakeWin.querySelectorAll(".candle").forEach((c) => c.click());
+  await sleep(1800);
+  const sr = cakeWin.querySelector(".seal-reveal");
+  check("cake: seal photo appears after candles", sr.classList.contains("show") && sr.querySelector("img").complete && sr.querySelector("img").naturalWidth > 0);
+
+  // mishti game: starts, items fall, score changes when catching
+  const mw = OS.windows.get("mishti");
+  mw.querySelector(".mb-go").click();
+  await sleep(2500);
+  check("mishti: game running with a timer", mw._playing && +mw.querySelector(".mb-time span").textContent < 75);
+  check("mishti: start screen hidden", !mw.querySelector(".mb-start"));
+
   check("no horizontal page scroll", document.documentElement.scrollWidth <= innerWidth);
 
   const failed = results.filter((r) => !r.ok);

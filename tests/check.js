@@ -64,6 +64,8 @@ test("voice note files exist and are referenced correctly", () => {
     if (m && m.voice) assert(ids.has(m.voice), `${f.name}: unknown voice "${m.voice}"`);
 });
 
+test("birthday seal photo exists", () => assert(fs.existsSync(rel("assets/seal.jpg")), "missing assets/seal.jpg"));
+
 test("no sound plays at startup", () => assert(!D.systemSounds.login, "systemSounds.login should be null"));
 
 test("seal videos have valid YouTube ids", () => {

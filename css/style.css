@@ -584,3 +584,45 @@ i[data-lucide] { display: inline-block; width: 1em; height: 1em; }
 }
 
 .trash-grid { padding: 10px; }
+
+/* cake: blow meter + seal reveal */
+.cake-app { position: relative; overflow: hidden; }
+.blow-meter { width: 180px; height: 8px; border-radius: 4px; background: rgba(255,255,255,.15); margin-top: 12px; overflow: hidden; opacity: 0; transition: opacity .3s; }
+.blow-meter.on { opacity: 1; }
+.blow-meter i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #6ec6ff, #fff); border-radius: 4px; transition: width .05s linear; }
+.blow-meter.hot i { background: linear-gradient(90deg, #ffd166, #ff5fa2); }
+.seal-reveal { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 20px;
+  background: rgba(20, 10, 40, .88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); opacity: 0; pointer-events: none; transition: opacity .5s; }
+.seal-reveal.show { opacity: 1; pointer-events: auto; }
+.seal-reveal img { width: min(380px, 90%); border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,.5); transform: translateY(40px) scale(.9); transition: transform .7s cubic-bezier(.2,.9,.3,1.3); }
+.seal-reveal.show img { transform: none; }
+.sr-cap { font-family: var(--hand); font-size: 28px; text-align: center; max-width: 380px; line-height: 1.2; }
+.sr-credit { font-size: 10px; opacity: .55; }
+.sr-credit a { color: inherit; }
+
+/* Mishti Bhandar catch game */
+.mb-game { height: 100%; display: flex; flex-direction: column; background: linear-gradient(#fff6e8, #ffd7b0); }
+.mb-hud { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 16px; border-bottom: 1px solid rgba(0,0,0,.08); background: rgba(255,255,255,.6); }
+.mb-score b { font-size: 26px; font-weight: 800; color: #8a2c55; } .mb-score span { color: var(--muted); font-size: 13px; margin-left: 3px; }
+.mb-mode { text-align: center; padding: 4px 16px; border-radius: 12px; background: #ff5fa2; color: #fff; transition: background .3s; min-width: 110px; }
+.mb-mode small { display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; opacity: .85; }
+.mb-mode b { font-size: 18px; letter-spacing: 1px; }
+.mb-mode.nonta { background: #e09a1a; }
+.mb-time { font-weight: 700; color: #6b3d12; display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
+.mb-stage { position: relative; flex: 1; overflow: hidden; touch-action: none; cursor: none; }
+.mb-stage canvas { display: block; }
+.mb-stage.hit { animation: shake .3s; }
+.mb-shout { position: absolute; top: 24px; left: 50%; transform: translateX(-50%) scale(.6); padding: 10px 18px; border-radius: 16px; background: #fff; color: #c1121f; font-weight: 800; font-size: 18px; box-shadow: 0 8px 24px rgba(0,0,0,.2); opacity: 0; transition: .25s cubic-bezier(.2,.9,.3,1.4); white-space: nowrap; pointer-events: none; }
+.mb-shout.show { opacity: 1; transform: translateX(-50%) scale(1); }
+.mb-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; padding: 24px; background: rgba(255, 246, 232, .94); cursor: default; overflow: auto; }
+.mb-overlay h2 { margin: 4px 0; font-size: 24px; }
+.mb-overlay p { margin: 4px 0; font-size: 13px; max-width: 380px; line-height: 1.5; color: #4a3020; }
+.mb-overlay .btn { margin-top: 10px; padding: 10px 22px; font-size: 14px; }
+.mb-shop { font-size: 56px; color: #c26a1b; } .mb-shop.angry { color: #c1121f; }
+.mb-coupon { border: 3px dashed #c26a1b; border-radius: 16px; padding: 18px 22px; background: #fffdf5; max-width: 380px; }
+.mb-coupon small { letter-spacing: 2px; text-transform: uppercase; color: #9a7b1a; font-weight: 700; font-size: 11px; }
+.mb-coupon h2 { font-family: var(--hand); font-size: 36px; color: #8a2c55; }
+
+/* keep full-screen / phone windows above the dock */
+.win.max { bottom: 78px !important; }
+@media (max-width: 700px) { .win, .win.max { inset: 28px 0 66px 0 !important; } }
